@@ -1,5 +1,8 @@
 """This file contains the main application entry point."""
 
+import asyncio
+import logging
+
 from contextlib import asynccontextmanager
 from datetime import datetime
 
@@ -40,6 +43,12 @@ from app.services.memory import memory_service
 load_dotenv()
 langfuse_init()
 
+# Quiet psycopg's connection-pool retry warnings. When Postgres is absent (the
+# default local clone-and-run), the chat-graph / mem0 pools would otherwise flood
+# the console with "error connecting in 'pool-N'" lines during the brief pre-warm
+# attempt. The VC pipeline does not depend on Postgres, so these are noise.
+logging.getLogger("psycopg.pool").setLevel(logging.CRITICAL)
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -57,18 +66,27 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         logger.exception("cache_initialization_failed", error=str(e))
 
-    # Pre-warm the LangGraph agent: create graph + connection pool at startup
-    # to avoid cold-start latency on the first request
+    # Pre-warm the LangGraph chat agent + mem0 (both connect to Postgres). These
+    # are optional optimizations for the template's chat features; the VC pipeline
+    # does not use them. Bound each by a short timeout so that when Postgres is
+    # absent (the default local clone-and-run) the app boots in seconds instead
+    # of blocking ~30s on the connection-pool timeout.
+    _PREWARM_TIMEOUT_S = 5.0
+
     try:
-        await agent.create_graph()
+        await asyncio.wait_for(agent.create_graph(), timeout=_PREWARM_TIMEOUT_S)
         logger.info("graph_pre_warmed")
+    except asyncio.TimeoutError:
+        logger.warning("graph_pre_warm_skipped_no_db", timeout_s=_PREWARM_TIMEOUT_S)
     except Exception as e:
         logger.exception("graph_pre_warm_failed", error=str(e))
 
     # Pre-warm mem0 AsyncMemory: initializes pgvector connection and schema check
     # so the first search() cache miss or add() doesn't pay the ~130ms cold-init cost
     try:
-        await memory_service.initialize()
+        await asyncio.wait_for(memory_service.initialize(), timeout=_PREWARM_TIMEOUT_S)
+    except asyncio.TimeoutError:
+        logger.warning("memory_service_pre_warm_skipped_no_db", timeout_s=_PREWARM_TIMEOUT_S)
     except Exception as e:
         logger.exception("memory_service_pre_warm_failed", error=str(e))
 
