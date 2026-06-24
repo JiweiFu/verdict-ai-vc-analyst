@@ -1,0 +1,149 @@
+// ========= Copyright 2025-2026 @ Eigent.ai All Rights Reserved. =========
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+// ========= Copyright 2025-2026 @ Eigent.ai All Rights Reserved. =========
+
+import { Textarea } from '@/components/ui/textarea';
+import { Check, CircleDashed, PenLine, Trash2 } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { Button } from '../../ui/button';
+
+interface TaskItemProps {
+  taskInfo: {
+    id: string;
+    content: string;
+  };
+  taskIndex: number;
+  onUpdate: (content: string) => void;
+  onSave: () => void;
+  onDelete: () => void;
+}
+
+export function TaskItem({
+  taskInfo,
+  taskIndex,
+  onUpdate,
+  onSave,
+  onDelete,
+}: TaskItemProps) {
+  const { t } = useTranslation();
+  const [isFocus, setIsFocus] = useState(false);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const handleFocus = (e: React.MouseEvent<any>, isFocus: boolean) => {
+    e.stopPropagation();
+    if (isFocus) {
+      setIsFocus(true);
+      textareaRef.current?.focus();
+    } else {
+      setIsFocus(false);
+      textareaRef.current?.blur();
+    }
+  };
+
+  // auto adjust height
+  const adjustHeight = () => {
+    if (textareaRef.current) {
+      textareaRef.current.style.height = 'auto';
+      textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
+    }
+  };
+
+  // when content changes, adjust height
+  useEffect(() => {
+    adjustHeight();
+  }, [taskInfo.content]);
+
+  return (
+    <div key={`task-item-${taskIndex}`} className="w-full">
+      <div
+        onDoubleClick={(e) => handleFocus(e, true)}
+        className={`group min-h-2 gap-0 rounded-lg p-sm hover:bg-ds-bg-neutral-default-hover mb-2 relative flex w-full items-start border border-solid ${
+          isFocus
+            ? 'border-ds-border-neutral-subtle-disabled bg-ds-bg-neutral-subtle-default'
+            : 'border-ds-border-neutral-subtle-default group-hover:border-transparent'
+        }`}
+      >
+        <div className="h-4 w-7 pr-sm pt-0.5 flex flex-shrink-0 cursor-pointer items-center justify-center">
+          {taskInfo.id === '' ? (
+            <CircleDashed
+              size={13}
+              className="text-ds-icon-neutral-muted-default"
+            />
+          ) : (
+            <div className="h-2 w-2 bg-ds-icon-information-default-default rounded-full"></div>
+          )}
+        </div>
+        <div className="min-h-4 min-w-0 py-0.5 relative flex flex-1 items-center self-stretch overflow-hidden transition-all duration-300">
+          <Textarea
+            ref={textareaRef}
+            placeholder={t('layout.add-new-task')}
+            className={`${
+              isFocus && 'w-[calc(100%-52px)]'
+            } min-h-2 min-w-0 p-0 text-xs resize-none overflow-hidden rounded-none border-none bg-transparent leading-[20px] break-words shadow-none ring-0 focus-visible:ring-0 focus-visible:ring-offset-0`}
+            value={taskInfo.content}
+            onChange={(e) => onUpdate(e.target.value)}
+            onBlur={() => {
+              setTimeout(() => {
+                onSave();
+                setIsFocus(false);
+              }, 100);
+            }}
+            rows={1}
+          />
+          {!isFocus && (
+            <div className="inset-0 absolute h-full w-full bg-transparent"></div>
+          )}
+        </div>
+        <div
+          className={`right-2 top-2 gap-xs absolute flex items-center group-hover:opacity-100 ${
+            isFocus ? 'opacity-100' : 'opacity-0'
+          } transition-opacity duration-300`}
+        >
+          {!isFocus ? (
+            <Button
+              onClick={(e) => handleFocus(e, true)}
+              className="rounded-full"
+              variant="outline"
+              size="xs"
+              buttonContent="icon-only"
+            >
+              <PenLine size={16} className="" />
+            </Button>
+          ) : (
+            <Button
+              onClick={(e) => {
+                onSave();
+                handleFocus(e, false);
+              }}
+              className="rounded-full"
+              variant="success"
+              size="xs"
+              buttonContent="icon-only"
+            >
+              <Check size={16} className="text-current" />
+            </Button>
+          )}
+          <Button
+            onClick={() => onDelete()}
+            className="rounded-full"
+            variant="caution"
+            size="xs"
+            buttonContent="icon-only"
+          >
+            <Trash2 size={16} className="text-ds-icon-neutral-muted-default" />
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}

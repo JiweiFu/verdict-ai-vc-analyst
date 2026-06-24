@@ -1,0 +1,69 @@
+// ========= Copyright 2025-2026 @ Eigent.ai All Rights Reserved. =========
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+// ========= Copyright 2025-2026 @ Eigent.ai All Rights Reserved. =========
+
+import { useHost } from '@/host';
+import { useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
+import { Button } from '../ui/button';
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '../ui/dialog';
+
+interface Props {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  trigger?: React.ReactNode;
+}
+export default function CloseNoticeDialog({
+  open,
+  onOpenChange,
+  trigger,
+}: Props) {
+  const host = useHost();
+  const electronAPI = host?.electronAPI;
+  const { t } = useTranslation();
+  const onSubmit = useCallback(() => {
+    electronAPI?.closeWindow(true);
+  }, [electronAPI]);
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      {trigger && <DialogTrigger asChild>{trigger}</DialogTrigger>}
+      <DialogContent className="gap-0 !rounded-xl border-ds-border-neutral-strong-default !bg-ds-bg-neutral-strong-default p-0 shadow-sm sm:max-w-[600px] border">
+        <DialogHeader className="!rounded-t-xl !bg-ds-bg-neutral-strong-default p-md">
+          <DialogTitle className="m-0">{t('layout.close-notice')}</DialogTitle>
+        </DialogHeader>
+        <div className="gap-md bg-ds-bg-neutral-strong-default p-md flex flex-col">
+          {t('layout.a-task-is-currently-running')}
+        </div>
+        <DialogFooter className="!rounded-b-xl bg-ds-bg-neutral-inverse-default p-md">
+          <DialogClose asChild>
+            <Button variant="ghost" size="md">
+              {t('layout.cancel')}
+            </Button>
+          </DialogClose>
+          <Button size="md" onClick={onSubmit} variant="primary">
+            {t('layout.yes')}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}

@@ -1,0 +1,38 @@
+Verdict — AI VC Analyst
+Copyright (c) 2026 Jiwei Fu
+
+This product includes and builds upon the following third-party open-source
+work. Their original license texts are retained in the respective
+subdirectories.
+
+------------------------------------------------------------------------------
+1. Backend foundation — FastAPI + LangGraph production template
+   Author:  Wassim EL BAKKOURI
+   Source:  https://github.com/wassim249/fastapi-langgraph-agent-production-ready-template
+   License: MIT (see backend/LICENSE)
+   Use:     The backend (FastAPI app, LangGraph scaffolding, observability,
+            memory layer, Alembic migrations) is derived from this template.
+            The VC analysis pipeline (scout/market/product/founder/chief
+            agents, streaming, BYO-key) is original work added on top.
+
+------------------------------------------------------------------------------
+2. Frontend shell — Eigent
+   Author:  Eigent AI (eigent-ai)
+   Source:  https://github.com/eigent-ai/eigent
+   License: Apache License 2.0 (see frontend/LICENSE)
+   Use:     The desktop/web frontend shell (Vite + React + Tailwind UI kit,
+            stores, routing) is derived from Eigent. The original Eigent agent
+            product surfaces were replaced with the Verdict VC analysis UI.
+            Apache-2.0 source license headers are retained in modified files.
+
+------------------------------------------------------------------------------
+3. Research reference — SSFF (Startup Success Forecasting Framework)
+   Paper:   "Startup Success Forecasting Framework" (arXiv:2405.19456)
+   Authors: Xisen Wang et al.
+   Source:  https://github.com/xisen-w/Startup-Success-Forecasting-Framework
+   Use:     The multi-agent analyst design (founder/market/product analysis,
+            founder L1–L5 segmentation, chief integration) is inspired by
+            SSFF. Verdict deliberately keeps only the LLM-analyst pipeline and
+            drops SSFF's ML components (random forest, neural-net idea-fit,
+            embeddings). See the README "Design notes" for the rationale.
+------------------------------------------------------------------------------
